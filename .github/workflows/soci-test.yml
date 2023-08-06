@@ -57,3 +57,6 @@ jobs:
 
       - name: Push image with containerd
         run: sudo ctr i push --user "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" ${{ steps.repo_slug.outputs.result }}/soci-test:latest
+
+      - name: push SOCI index
+        run: sudo soci push --user "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" ${{ steps.repo_slug.outputs.result }}/soci-test:latest
