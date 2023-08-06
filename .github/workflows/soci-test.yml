@@ -47,5 +47,3 @@ jobs:
 
       - name: Create soci index
         run: sudo soci create ${{ steps.repo_slug.outputs.result }}/soci-test:latest
-
-      - name: Import image in containerd
