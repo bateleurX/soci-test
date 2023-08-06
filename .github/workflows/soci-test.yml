@@ -42,3 +42,6 @@ jobs:
           file: ./Dockerfile
           tags: ${{ steps.repo_slug.outputs.result }}/soci-test:latest
           push: true
+
+      - name: Create soci index
+        run: soci create ${{ steps.repo_slug.outputs.result }}/soci-test:latest
