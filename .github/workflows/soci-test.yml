@@ -19,6 +19,13 @@ jobs:
           sudo soci
           sudo ctr
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup Dcoker buildkit
         uses: docker/build-push-action@v4
         with:
