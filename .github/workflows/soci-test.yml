@@ -24,5 +24,5 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ghcr.io/beteleurx/soci-test:latest
+          tags: ghcr.io/bateleurx/soci-test:latest
           push: true
