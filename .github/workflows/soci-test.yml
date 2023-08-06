@@ -5,6 +5,8 @@ jobs:
   version:
     name: SOCI check
     runs-on: ubuntu-22.04
+    permissions:
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -19,6 +21,13 @@ jobs:
           sudo soci
           sudo ctr
 
+      - name: Sanitize repo slug
+        uses: actions/github-script@v6
+        id: repo_slug
+        with:
+          result-encoding: string
+          script: return 'ghcr.io/${{ github.repository_owner }}'.toLowerCase()
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -31,5 +40,5 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ghcr.io/bateleurx/soci-test:latest
+          tags: ${{ steps.repo_slug.outputs.result }}/soci-test:latest
           push: true
