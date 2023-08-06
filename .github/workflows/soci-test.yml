@@ -18,3 +18,11 @@ jobs:
         run: |
           sudo soci
           sudo ctr
+
+      - name: Setup Dcoker buildkit
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: ghcr.io/beteleurx/soci-test:latest
+          push: true
