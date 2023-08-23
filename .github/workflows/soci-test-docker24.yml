@@ -1,0 +1,57 @@
+name: SOCI test
+on:
+  workflow_dispatch:
+jobs:
+  version:
+    name: SOCI check
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install soci-snapshotter
+        run: |
+          wget https://github.com/awslabs/soci-snapshotter/releases/download/v0.3.0/soci-snapshotter-0.3.0-linux-amd64.tar.gz
+          sudo tar -C /usr/local/bin -xvf soci-snapshotter-0.3.0-linux-amd64.tar.gz soci soci-snapshotter-grpc
+
+      - name: Check soci-snapshotter
+        run: |
+          sudo soci
+          sudo ctr version
+
+      - name: Sanitize repo slug
+        uses: actions/github-script@v6
+        id: repo_slug
+        with:
+          result-encoding: string
+          script: return 'ghcr.io/${{ github.repository_owner }}'.toLowerCase()
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Use containerd as a docker imagestore
+        run: echo '{"features":{"containerd-snapshotter":true}}' |jq | sudo tee /etc/docker/daemon.json
+             sudo systemctl restart docker
+
+      - name: Build Docker images
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+          push: true
+
+      - name: Create soci index
+        run: sudo soci --namespace moby create ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+
+      - name: push SOCI index
+        run: sudo soci --namespace moby push --user "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
