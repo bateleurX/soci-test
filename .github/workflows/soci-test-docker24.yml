@@ -22,20 +22,6 @@ jobs:
           sudo soci
           sudo ctr version
 
-      - name: Sanitize repo slug
-        uses: actions/github-script@v6
-        id: repo_slug
-        with:
-          result-encoding: string
-          script: return 'ghcr.io/${{ github.repository_owner }}'.toLowerCase()
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -46,9 +32,9 @@ jobs:
         id: login-ecr
         env:
           AWS_REGION: ap-northeast-1
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: docker/login-action@v2
         with:
-          mask-password: 'true'
+          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -64,7 +50,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
           load: true
 
       - name: list images
@@ -77,11 +63,11 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
           push: true
 
       - name: Create soci index
-        run: sudo soci --namespace moby create ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
+        run: sudo soci --namespace moby create ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
 
       - name: push SOCI index
-        run: sudo soci --namespace moby push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
+        run: sudo soci --namespace moby push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
