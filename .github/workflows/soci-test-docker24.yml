@@ -43,6 +43,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
+        id: login-ecr
         env:
           AWS_REGION: ap-northeast-1
         uses: aws-actions/amazon-ecr-login@v1
@@ -63,7 +64,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
           load: true
 
       - name: list images
@@ -76,11 +77,11 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
           push: true
 
       - name: Create soci index
-        run: sudo soci --namespace moby create ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+        run: sudo soci --namespace moby create ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
 
       - name: push SOCI index
-        run: sudo soci --namespace moby push --user "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+        run: sudo soci --namespace moby push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
