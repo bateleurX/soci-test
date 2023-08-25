@@ -14,7 +14,7 @@ jobs:
 
       - name: Install soci-snapshotter
         run: |
-          wget https://github.com/awslabs/soci-snapshotter/releases/download/v0.3.0/soci-snapshotter-0.3.0-linux-amd64.tar.gz
+          wget --quiet https://github.com/awslabs/soci-snapshotter/releases/download/v0.3.0/soci-snapshotter-0.3.0-linux-amd64.tar.gz
           sudo tar -C /usr/local/bin -xvf soci-snapshotter-0.3.0-linux-amd64.tar.gz soci soci-snapshotter-grpc
 
       - name: Check soci-snapshotter
