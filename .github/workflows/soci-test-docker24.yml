@@ -32,9 +32,9 @@ jobs:
         id: login-ecr
         env:
           AWS_REGION: ap-northeast-1
-        uses: docker/login-action@v2
+        uses: aws-actions/amazon-ecr-login@v1
         with:
-          registry: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com
+          mask-password: 'false'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -50,7 +50,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
           load: true
 
       - name: list images
@@ -63,11 +63,11 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
           push: true
 
       - name: Create soci index
-        run: sudo soci --namespace moby create ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
+        run: sudo soci --namespace moby create ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
 
       - name: push SOCI index
-        run: sudo soci --namespace moby push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:2
+        run: sudo soci --namespace moby push --user AWS:$(aws ecr get-login-password --region ap-northeast-1) ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
