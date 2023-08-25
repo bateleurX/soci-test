@@ -50,13 +50,20 @@ jobs:
           context: .
           file: ./Dockerfile
           tags: ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
-          push: true
           load: true
 
       - name: list images
         run: |
           sudo ctr --namespace moby image ls
           sudo docker images -a
+
+      - name: Build Docker images
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
+          push: true
 
       - name: Create soci index
         run: sudo soci --namespace moby create ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
