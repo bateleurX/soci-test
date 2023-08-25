@@ -40,8 +40,9 @@ jobs:
 
       - name: Use containerd as a docker imagestore
         run: |
-          echo '{"features":{"containerd-snapshotter":true}}' |jq | sudo tee /etc/docker/daemon.json
+          echo '{"features":{"containerd-snapshotter":true}}' | jq | sudo tee /etc/docker/daemon.json
           sudo systemctl restart docker
+          sudo docker system info
 
       - name: Build Docker images
         uses: docker/build-push-action@v4
