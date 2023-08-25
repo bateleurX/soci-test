@@ -42,6 +42,13 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_ROLE_NAME }}
           aws-region: us-east-1
 
+      - name: Login to Amazon ECR
+        env:
+          AWS_DEFAULT_REGION: ap-northeast-1
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
