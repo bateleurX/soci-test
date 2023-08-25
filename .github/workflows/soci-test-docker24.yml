@@ -51,6 +51,7 @@ jobs:
           file: ./Dockerfile
           tags: ${{ steps.repo_slug.outputs.result }}/soci-test-2:latest
           push: true
+          load: true
 
       - name: list images
         run: |
