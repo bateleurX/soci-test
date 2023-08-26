@@ -13,7 +13,7 @@ jobs:
 
       - name: Install soci-snapshotter
         run: |
-          wget https://github.com/awslabs/soci-snapshotter/releases/download/v0.3.0/soci-snapshotter-0.3.0-linux-amd64.tar.gz
+          wget --quiet https://github.com/awslabs/soci-snapshotter/releases/download/v0.3.0/soci-snapshotter-0.3.0-linux-amd64.tar.gz
           sudo tar -C /usr/local/bin -xvf soci-snapshotter-0.3.0-linux-amd64.tar.gz soci soci-snapshotter-grpc
 
       - name: Check soci-snapshotter
@@ -21,19 +21,19 @@ jobs:
           sudo soci
           sudo ctr version
 
-      - name: Sanitize repo slug
-        uses: actions/github-script@v6
-        id: repo_slug
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          result-encoding: string
-          script: return 'ghcr.io/${{ github.repository_owner }}'.toLowerCase()
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_ROLE_NAME }}
+          aws-region: us-east-1
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        env:
+          AWS_REGION: ap-northeast-1
+        uses: aws-actions/amazon-ecr-login@v1
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          mask-password: 'true'
 
       - name: Set up containerd
         uses: crazy-max/ghaction-setup-containerd@v2
@@ -46,17 +46,17 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: ${{ steps.repo_slug.outputs.result }}/soci-test:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:1
           outputs: type=oci,dest=/tmp/image.tar
 
       - name: Import image in containerd
-        run: sudo ctr i import --base-name ${{ steps.repo_slug.outputs.result }}/soci-test --digests --all-platforms /tmp/image.tar
+        run: sudo ctr i import --base-name ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }} --digests --all-platforms /tmp/image.tar
 
       - name: Create soci index
-        run: sudo soci create ${{ steps.repo_slug.outputs.result }}/soci-test:latest
+        run: sudo soci create ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:1
 
       - name: Push image with containerd
-        run: sudo ctr i push --user "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" ${{ steps.repo_slug.outputs.result }}/soci-test:latest
+        run: sudo ctr i push --user AWS:$(aws ecr get-login-password --region ap-northeast-1) ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:1
 
       - name: push SOCI index
-        run: sudo soci push --user "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}" ${{ steps.repo_slug.outputs.result }}/soci-test:latest
+        run: sudo soci push --user AWS:$(aws ecr get-login-password --region ap-northeast-1) ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:1
