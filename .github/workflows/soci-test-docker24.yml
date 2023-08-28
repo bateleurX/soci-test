@@ -2,24 +2,25 @@ name: SOCI test
 on:
   workflow_dispatch:
 jobs:
-  version:
-    name: SOCI check
+  build:
+    name: SOCI with Docker
     runs-on: ubuntu-22.04
     permissions:
       id-token: write
+    env:
+      SOCI_VERSION: "0.3.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install soci-snapshotter
         run: |
-          wget --quiet https://github.com/awslabs/soci-snapshotter/releases/download/v0.3.0/soci-snapshotter-0.3.0-linux-amd64.tar.gz
-          sudo tar -C /usr/local/bin -xvf soci-snapshotter-0.3.0-linux-amd64.tar.gz soci soci-snapshotter-grpc
+          wget --quiet https://github.com/awslabs/soci-snapshotter/releases/download/v$SOCI_VERSION/soci-snapshotter-$SOCI_VERSION-linux-amd64.tar.gz
+          sudo tar -C /usr/local/bin -xvf soci-snapshotter-$SOCI_VERSION-linux-amd64.tar.gz soci soci-snapshotter-grpc
 
       - name: Check soci-snapshotter
         run: |
           sudo soci
-          sudo ctr version
 
       - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -51,11 +52,6 @@ jobs:
           file: ./Dockerfile
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:2
           load: true
-
-      - name: list images
-        run: |
-          sudo ctr --namespace moby image ls
-          sudo docker images -a
 
       - name: Build Docker images
         uses: docker/build-push-action@v4
